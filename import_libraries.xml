@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- <template id="assets_pos" name="pos_etta assets" inherit_id="point_of_sale._assets_pos">
+        <xpath expr="." position="inside">
+            <link rel="stylesheet" href="/pos_etta/static/src/css/style.css"/>
+            <script type="text/javascript" src="/pos_etta/static/src/js/DeliveryOrders/ProductSync.js"/>
+            <script type="text/javascript" src="/pos_etta/static/src/js/DeliveryOrders/CompanyProfile.js"/>
+            <script type="text/javascript" src="/pos_etta/static/src/js/DeliveryScreenWidget.js"/>
+            <script type="text/javascript" src="/pos_etta/static/src/js/DeliveryOrders/DeliveryOrdersScreen.js"/>
+            <script type="text/javascript" src="/pos_etta/static/src/js/Screens/DeliveryOrderRow.js"/>
+            <script type="text/javascript" src="/pos_etta/static/src/js/Screens/DeliveryChrome.js"/>
+
+            
+        </xpath>
+    </template> -->
+</odoo>

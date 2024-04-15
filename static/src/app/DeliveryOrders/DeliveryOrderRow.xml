@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="DeliveryOrderRow">
+        <t t-set="move" t-value="props.move"/>
+
+        <tr class="receipt-line">
+            <td style="text-align: center">
+                <t t-esc="props.unique_id"/>
+            </td>
+            <td style="text-align: center">
+                <span class="product-line-name">
+                    <t t-esc="move.customer_name"/>
+                </span>
+            </td>
+            <td style="text-align: center">
+                <span class="product-line-name">
+                    <t t-esc="move.cart_items.length"/>
+                </span>
+            </td>
+            <td style="text-align: center">
+                <span class="product-line-name">
+                    <t t-esc="move.total_cart_price"/>
+                </span>
+            </td>
+            <td style="text-align: center">
+                <span class="product-line-name">
+                    <t t-esc="getElapsedTime"/>
+                </span>
+            </td>
+            <td style="text-align: center">
+                <t t-if="move.order_status == 1">New</t>
+                <t t-if="move.order_status == 3">Accepted</t>
+                <t t-if="move.order_status == 5">Prepared</t>
+                <t t-if="move.order_status == 7">Ready</t>
+            </td>
+        </tr>
+    </t>
+</templates>

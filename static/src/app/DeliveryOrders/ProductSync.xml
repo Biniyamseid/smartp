@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="ProductSync">
+        <t t-set="move" t-value="props"/>
+        <section class='client-details edit' style="max-height: 600px;min-height: 300px;height: fit-content;">
+            <div class="header">
+                <button t-on-click.stop="trigger('actionConfirm')">
+                    <i class="fa fa-check"/>
+                    <t t-if="!env.isMobile">Refresh Products</t>
+                </button>
+            </div>
+          
+            <div class='client-details-box clearfix'>
+                <div class='client-details-left'>
+                   
+                    <table class='summary-table' t-if="getFeatchedZmallProducts and getFeatchedZmallProducts.length != 0">
+                        <tr class="receipt-line header">
+                            <td style="text-align: center">
+                                ID
+                            </td>
+                            <td style="text-align: center">
+                                Product Name
+                            </td>
+                            <td style="text-align: center">
+                                Price
+                            </td>
+                            <td style="text-align: center">
+                                Category Name
+                            </td>
+                            <td style="text-align: center">
+                                Visiblity On Zmall
+                            </td>
+                            <td style="text-align: center">
+                                Product on POS
+                            </td>
+                        </tr>
+                        <t t-set="number" t-value="1"/>
+                        <t t-foreach="getFeatchedZmallProducts" t-as="product" t-key="getFeatchedZmallProducts.unique_id">
+                            <tr class="receipt-line" t-on-click="alert(product.name)">
+                                <td style="text-align: center">
+                                    <t t-esc="product.unique_id"/>
+                                </td>
+                                <td style="text-align: center">
+                                    <span class="product-line-name">
+                                        <t t-esc="product.name"/>
+                                    </span>
+                                </td>
+                                <td style="text-align: center">
+                                    <span class="product-line-name">
+                                        <t t-esc="product.price"/>
+                                    </span>
+                                </td>
+                                <td style="text-align: center">
+                                    <span class="product-line-name">
+                                        <t t-esc="product.category_name"/>
+                                    </span>
+                                </td>
+                                <td style="text-align: center">
+                                    <t t-if="product.is_visible_in_store">Visible</t>
+                                    <t t-if="!product.is_visible_in_store">Invisible</t>
+                                </td>
+                                
+                            </tr>
+                        </t>
+                    </table>
+                </div>
+                <div class='client-details-right'>
+                    <h2>My Products</h2>
+                    <table class='summary-table' t-if="getFeatchedZmallProducts and getFeatchedZmallProducts.length != 0">
+                        <tr class="receipt-line header">
+                            <td style="text-align: center">
+                                ID
+                            </td>
+                            <td style="text-align: center">
+                                Product Name
+                            </td>
+                            <td style="text-align: center">
+                                Price
+                            </td>
+                            <td style="text-align: center">
+                                Category Name
+                            </td>
+                            <td style="text-align: center">
+                                Visiblity On Zmall
+                            </td>
+                        </tr>
+                        <t t-set="number" t-value="1"/>
+                        <t t-foreach="getproductsonpos" t-as="product" t-key="getproductsonpos.unique_id">
+                            <tr class="receipt-line" t-on-click="alert(product.name)">
+                                <td style="text-align: center">
+                                    <t t-esc="product.unique_id"/>
+                                </td>
+                                <td style="text-align: center">
+                                    <span class="product-line-name">
+                                        <t t-esc="product.name"/>
+                                    </span>
+                                </td>
+                                <td style="text-align: center">
+                                    <span class="product-line-name">
+                                        <t t-esc="product.price"/>
+                                    </span>
+                                </td>
+                                <td style="text-align: center">
+                                    <span class="product-line-name">
+                                        <t t-esc="product.category_name"/>
+                                    </span>
+                                </td>
+                                <td style="text-align: center">
+                                    <t t-if="product.is_visible_in_store">Visible</t>
+                                    <t t-if="!product.is_visible_in_store">Invisible</t>
+                                </td>
+                            </tr>
+                        </t>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </t>
+
+</templates>

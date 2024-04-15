@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="CompanyProfile">
+        <t t-set="move" t-value="props"/>
+        <section class='client-details edit'
+                 style="max-height: 600px;min-height: 300px;height: fit-content;">
+            <div class="header">
+                <button t-on-click.stop="trigger('actionConfirm')">
+                    <i class="fa fa-check"/>
+                    <t t-if="!env.isMobile">Confirm</t>
+                </button>
+                <button t-on-click.stop="trigger('actionPreview')">
+                    <i class="fa fa-toggle-on"/>
+                    <t t-if="!env.isMobile">Preview</t>
+                </button>
+                <button t-on-click.stop="trigger('actionCancelEntry')">
+                    <i class="fa fa-trash"/>
+                    <t t-if="!env.isMobile">Cancel Entry</t>
+                </button>
+                <button t-on-click.stop="trigger('actionResetDraft')">
+                    <i class="fa fa-refresh"/>
+                    <t t-if="!env.isMobile">Reset Draft</t>
+                </button>
+            </div>
+            <div class="client-picture">
+                <t t-if="partnerImageUrl">
+                    <img t-att-src="partnerImageUrl" alt="Partner"
+                         style="width: 64px; height: 64px; object-fit: cover;" />
+                </t>
+            </div>
+            <div class='client-name'>
+                <t t-if="storename">
+                    <t t-esc="storename"/>
+                </t>
+                <t t-if="!storename">
+                    N/A
+                </t>
+            </div>
+            <div class='client-details-box clearfix'>
+                <div class='client-details-left'>
+                    <div class='client-detail'>
+                        <span class='label'>Visibile</span>
+                        <t t-if='isVisibile'>
+                            <span class='detail client-address'><t t-esc='isVisibile' /></span>
+                        </t>
+                        <t t-if='!isVisibile'>
+                            <span class='detail client-address empty'>N/A</span>
+                        </t>
+                    </div>
+                    <div class='client-detail'>
+                        <span class='label'>In Business</span>
+                        <t t-if='isInBusiness'>
+                            <span class='detail client-origin'><t t-esc='isInBusiness' /></span>
+                        </t>
+                        <t t-if='!isInBusiness'>
+                            <span class='detail client-origin empty'>N/A</span>
+                        </t>
+                    </div>
+                    <div class='client-detail'>
+                        <span class='label'>Commisson Rate</span>
+                        <t t-if='commissonRate'>
+                            <span class='detail client-phone'><t t-esc='commissonRate' /></span>
+                        </t>
+                        <t t-if='!commissonRate'>
+                            <span class='detail client-phone empty'>N/A</span>
+                        </t>
+                    </div>
+                    <div class='client-detail'>
+                        <span class='label'>Is Store Busy</span>
+                        <t t-if='isStoreBusy'>
+                            <span class='detail client-phone'><t t-esc='isStoreBusy' /></span>
+                        </t>
+                        <t t-if='!isStoreBusy'>
+                            <span class='detail client-phone empty'>N/A</span>
+                        </t>
+                    </div>
+                </div>
+                <div class='client-details-right'>
+                    <div class='client-detail'>
+                        <span class='label'>Cashless Only</span>
+                        <t t-if='cashlessOnly'>
+                            <span class='detail client-phone'><t t-esc='cashlessOnly' /></span>
+                        </t>
+                        <t t-if='!cashlessOnly'>
+                            <span class='detail client-phone empty'>N/A</span>
+                        </t>
+                    </div>
+
+                    <div class='client-detail'>
+                        <span class='label'>Scheduled Order Only</span>
+                        <t t-if='scheduledOrderOnly'>
+                            <span class='detail client-phone'><t t-esc='scheduledOrderOnly' /></span>
+                        </t>
+                        <t t-if='!scheduledOrderOnly'>
+                            <span class='detail client-phone empty'>N/A</span>
+                        </t>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </t>
+
+</templates>

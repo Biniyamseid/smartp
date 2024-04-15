@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="DeliveryScreenWidget" >
+        <div class="ticket-button invoices-header-button" t-on-click="onClick">
+            <div class="with-badge" t-att-badge="count">
+                <img src="/pos_zmall/static/description/zmall_logo.png" style="border-radius: 20px;" alt="ZMALL" height="30" width="30" />
+            </div>
+            <div t-if="!env.isMobile" class="header-text">ZMallWIDGETSCREEN</div>
+           
+        </div>
+    </t>
+
+</templates>
