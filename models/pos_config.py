@@ -166,6 +166,7 @@ class PosConfig(models.Model):
         _logger.info(req)
         _logger.info("==================== >>>>>>>>> req config id")
         headers = {'Content-Type': 'application/json'}
+        _logger.info(f"==================== >>>>>>>>>{req['config_id']} configid is provided");
         pos_config = self.env['pos.config'].search([('id','=', req['config_id'])], limit=1)
         request_data = {
             "store_id": req['store_id'],
@@ -177,6 +178,8 @@ class PosConfig(models.Model):
 
         try:
             response = requests.post(str(get_orders_endpoint), json=request_data, headers=headers)
+            _logger.info(response.text)
+            _logger.info(f"==================== >>>>>>>>>{response.text} response.text")
         except:
             return {
                 'msg': 'Failed',
@@ -184,6 +187,7 @@ class PosConfig(models.Model):
             }
 
         response_json = json.loads(response.text)
+        _logger.info(f"response{response_json}")
         if str(response_json['success']) == 'True':
             return 'done'
         else:

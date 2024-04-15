@@ -22,7 +22,6 @@ import { ControlButtonsMixin } from "@point_of_sale/app/utils/control_buttons_mi
 import { useBarcodeReader } from "@point_of_sale/app/barcode/barcode_reader_hook";
 import { parseFloat } from "@web/views/fields/parsers";
 import { NumberPopup } from "@point_of_sale/app/utils/input_popups/number_popup";
-import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
 import { ControlButtonPopup } from "@point_of_sale/app/screens/product_screen/control_buttons/control_buttons_popup";
 import { ConnectionLostError } from "@web/core/network/rpc_service";
 import { ErrorBarcodePopup } from "@point_of_sale/app/barcode/error_popup/barcode_error_popup";
@@ -30,7 +29,10 @@ import { Numpad } from "@point_of_sale/app/generic_components/numpad/numpad";
 import { ProductsWidget } from "@point_of_sale/app/screens/product_screen/product_list/product_list";
 import { ActionpadWidget } from "@point_of_sale/app/screens/product_screen/action_pad/action_pad";
 import { Orderline } from "@point_of_sale/app/generic_components/orderline/orderline";
+import { ConfirmPopup } from "@point_of_sale/app/utils/confirm_popup/confirm_popup";
 import { OrderWidget } from "@point_of_sale/app/generic_components/order_widget/order_widget";
+import { SelectionPopup } from "@point_of_sale/app/utils/input_popups/selection_popup";
+import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
 // import { jsonrpc } from "@web/core/network/rpc_service";
 
 // import { Component, hooks } from "@odoo/owl";
@@ -121,11 +123,11 @@ export class DeliveryOrdersScreen extends Component {
         this.checkZmallProductExist();
 
     }
-    
 
 
     setup() {
         super.setup();
+        this.notif = useService('notification');
         this.env.services.notification = useService('notification');
         // this.notification = useService("pos_notification");
         this.popup = useService("popup");
@@ -141,11 +143,14 @@ export class DeliveryOrdersScreen extends Component {
 
         this.env.services.pos_bus.bus_service.trigger('myEvent', { myData: 'Hello, world!' });
         console.log("mounted from setup");
-        let self = this;
-
-        var res = new Promise(function (resolve, reject) {
-            clearTimeout(self.polling);
-
+    //     let self = this;
+        
+    
+        this.polling = null;
+    }
+    
+    onMounted() {
+            let self = this;
             self.polling = setInterval(function () {
                 console.log('_poll_for_zmall_response');
 
@@ -166,125 +171,188 @@ export class DeliveryOrdersScreen extends Component {
                     }
                     return Promise.reject(data);
                 }).then(function (status) {
+                    console.log(status);
                     console.log("ROSOLVED")
+
                     resolve(true);
                     self.render();
                 });
 
             }, 5000);
-        // this.env.services.pos_bus.bus_service.send('myEvent', { myData: 'Hello, world!' });
+    }
     
-        // posBus.trigger('get_store_info', {
-        //     // Add any payload you want to send with the message here
-        // });
-        // this.env.services.posBus.dispatch({
-        //     type: 'authZmall',
-        //     payload: true,
-        // });
+    willUnmount() {
+        clearInterval(this.polling);
+    }
+
+
+    
+
+
+    // setup() {
+    //     super.setup();
+    //     this.env.services.notification = useService('notification');
+    //     // this.notification = useService("pos_notification");
+    //     this.popup = useService("popup");
+    //     this.orm = useService("orm");
+    //     this.hardwareProxy = useService("hardware_proxy");
+    //     this.printer = useService("printer");
+    //     this.pos = usePos();
+
+    //     this.rpc = useService('rpc');
+    //     const posBus = useService('pos_bus');
+    //     console.log(posBus);
+    //     // console.log(this.env.services.pos_bus)
+
+    //     this.env.services.pos_bus.bus_service.trigger('myEvent', { myData: 'Hello, world!' });
+    //     console.log("mounted from setup");
+    //     let self = this;
+
+    //     var res = new Promise(function (resolve, reject) {
+    //         console.log(self.polling);
+    //         clearTimeout(self.polling);
+
+    //         self.polling = setInterval(function () {
+    //             console.log('_poll_for_zmall_response');
+
+    //             if (this.was_cancelled) {
+    //                 console.log('was_cancelled');
+
+    //                 resolve(false);
+    //                 return Promise.resolve();
+    //             }
+
+    //             self.getOrdersFromBackEnd().catch(function (data) {
+    //                 if (self.remaining_polls != 0) {
+    //                     self.remaining_polls--;
+    //                 } else {
+    //                     reject();
+    //                     // self.poll_error_order = self.pos.get_order();
+    //                     return self._handle_odoo_connection_failure(data);
+    //                 }
+    //                 return Promise.reject(data);
+    //             }).then(function (status) {
+    //                 console.log(status);
+    //                 console.log("ROSOLVED")
+
+    //                 resolve(true);
+    //                 self.render();
+    //             });
+
+    //         }, 5000);
+    //     // this.env.services.pos_bus.bus_service.send('myEvent', { myData: 'Hello, world!' });
+    
+    //     // posBus.trigger('get_store_info', {
+    //     //     // Add any payload you want to send with the message here
+    //     // });
+    //     // this.env.services.posBus.dispatch({
+    //     //     type: 'authZmall',
+    //     //     payload: true,
+    //     // });
         
     
-        // Send the "get_store_info" message
-        // posBus.dispatch({
-        //     type: 'authZmall',
-        //     payload: {},
-        // });
-    })};
+    //     // Send the "get_store_info" message
+    //     // posBus.dispatch({
+    //     //     type: 'authZmall',
+    //     //     payload: {},
+    //     // });
+    // })};
 
   
 
-    async willStart() {
-        super.willStart()
-        console.log("mounted");
-        let self = this;
+    // async willStart() {
+    //     super.willStart()
+    //     console.log("mounted");
+    //     let self = this;
 
-        var res = new Promise(function (resolve, reject) {
-            clearTimeout(self.polling);
+    //     var res = new Promise(function (resolve, reject) {
+    //         clearTimeout(self.polling);
 
-            self.polling = setInterval(function () {
-                console.log('_poll_for_zmall_response');
+    //         self.polling = setInterval(function () {
+    //             console.log('_poll_for_zmall_response');
 
-                if (this.was_cancelled) {
-                    console.log('was_cancelled');
+    //             if (this.was_cancelled) {
+    //                 console.log('was_cancelled');
 
-                    resolve(false);
-                    return Promise.resolve();
-                }
+    //                 resolve(false);
+    //                 return Promise.resolve();
+    //             }
 
-                self.getOrdersFromBackEnd().catch(function (data) {
-                    if (self.remaining_polls != 0) {
-                        self.remaining_polls--;
-                    } else {
-                        reject();
-                        // self.poll_error_order = self.pos.get_order();
-                        return self._handle_odoo_connection_failure(data);
-                    }
-                    return Promise.reject(data);
-                }).then(function (status) {
-                    console.log("ROSOLVED")
-                    resolve(true);
-                    self.render();
-                });
+    //             self.getOrdersFromBackEnd().catch(function (data) {
+    //                 if (self.remaining_polls != 0) {
+    //                     self.remaining_polls--;
+    //                 } else {
+    //                     reject();
+    //                     // self.poll_error_order = self.pos.get_order();
+    //                     return self._handle_odoo_connection_failure(data);
+    //                 }
+    //                 return Promise.reject(data);
+    //             }).then(function (status) {
+    //                 console.log("ROSOLVED")
+    //                 resolve(true);
+    //                 self.render();
+    //             });
 
-            }, 5000);
-        });
+    //         }, 5000);
+    //     });
 
-        // make sure to stop polling when we're done
-        res.then(function () {
-            console.log("RES THEN CALLED")
-            self._reset_state();
-        });
-        this.state.loading = true;
-        try {
-            // const moves = await this.env.pos.db.get_invoices();
-            const moves = null;
-            this.state.moves = moves;
-        } finally {
-            this.state.loading = false;
-        }
-    }
+    //     // make sure to stop polling when we're done
+    //     res.then(function () {
+    //         console.log("RES THEN CALLED")
+    //         self._reset_state();
+    //     });
+    //     this.state.loading = true;
+    //     try {
+    //         // const moves = await this.env.pos.db.get_invoices();
+    //         const moves = null;
+    //         this.state.moves = moves;
+    //     } finally {
+    //         this.state.loading = false;
+    //     }
+    // }
 
-    onMounted() {
-        super.onMounted()
-        console.log("mounted");
-        let self = this;
+    // onMounted() {
+    //     super.onMounted()
+    //     console.log("mounted");
+    //     let self = this;
 
-        var res = new Promise(function (resolve, reject) {
-            clearTimeout(self.polling);
+    //     var res = new Promise(function (resolve, reject) {
+    //         clearTimeout(self.polling);
 
-            self.polling = setInterval(function () {
-                console.log('_poll_for_zmall_response');
+    //         self.polling = setInterval(function () {
+    //             console.log('_poll_for_zmall_response');
 
-                if (this.was_cancelled) {
-                    console.log('was_cancelled');
+    //             if (this.was_cancelled) {
+    //                 console.log('was_cancelled');
 
-                    resolve(false);
-                    return Promise.resolve();
-                }
+    //                 resolve(false);
+    //                 return Promise.resolve();
+    //             }
 
-                self.getOrdersFromBackEnd().catch(function (data) {
-                    if (self.remaining_polls != 0) {
-                        self.remaining_polls--;
-                    } else {
-                        reject();
-                        // self.poll_error_order = self.pos.get_order();
-                        return self._handle_odoo_connection_failure(data);
-                    }
-                    return Promise.reject(data);
-                }).then(function (status) {
-                    console.log("ROSOLVED")
-                    resolve(true);
-                    self.render();
-                });
+    //             self.getOrdersFromBackEnd().catch(function (data) {
+    //                 if (self.remaining_polls != 0) {
+    //                     self.remaining_polls--;
+    //                 } else {
+    //                     reject();
+    //                     // self.poll_error_order = self.pos.get_order();
+    //                     return self._handle_odoo_connection_failure(data);
+    //                 }
+    //                 return Promise.reject(data);
+    //             }).then(function (status) {
+    //                 console.log("ROSOLVED")
+    //                 resolve(true);
+    //                 self.render();
+    //             });
 
-            }, 5000);
-        });
+    //         }, 5000);
+    //     });
 
-        // make sure to stop polling when we're done
-        res.then(function () {
-            console.log("RES THEN CALLED")
-            self._reset_state();
-        });
-    }
+    //     // make sure to stop polling when we're done
+    //     res.then(function () {
+    //         console.log("RES THEN CALLED")
+    //         self._reset_state();
+    //     });
+    // }
 
     setLoading(loading) {
         this.state.loading = loading;
@@ -374,6 +442,7 @@ export class DeliveryOrdersScreen extends Component {
         }).then(function (values) {
             self.setLoading(false);
             console.log("ZMALL ORDERS RESPOSNSE");
+            console.log("live data: " + JSON.stringify(values));
             console.log(values);
             window.localStorage.setItem("livedata", JSON.stringify(values));
             // this.state.zmallorders = values;
@@ -393,14 +462,16 @@ export class DeliveryOrdersScreen extends Component {
         console.log(data)
         console.log("======================= setOrdersStatus data =======================")
         // await this.rpc({
-        await jsonrpc({
+        await jsonrpc('/web/dataset/call_kw/pos.config/set_zmall_order_status/',{
             model: 'pos.config',
             method: 'set_zmall_order_status',
             args: [[], data],
             context: {
                 pos: true
-            }
+            },
+            kwargs: {}
         }).then(async function (value) {
+            console.log( " value after inside setOrderStatus"+value)
             self.setLoading(false);
             console.log("======================= setOrdersStatus value =======================")
             console.log(value)
@@ -422,20 +493,21 @@ export class DeliveryOrdersScreen extends Component {
             if (value === "done") {
                 //refrease or show done message
                 console.log("value => " + value);
-                self.getOrdersFromBackEnd();
+                await self.getOrdersFromBackEnd();
                 return true;
             }
 
             if (value === "error") {
                 //unknown error message
                 console.log("value => " + value);
-                self.getOrdersFromBackEnd();
+                await self.getOrdersFromBackEnd();
                 return false;
             }
             return value;
         }, function (err) {
             self.setLoading(false);
             console.log("=========err=========");
+            console.log("the error is "+err)
             console.log(err);
             return err;
         });
@@ -449,48 +521,48 @@ export class DeliveryOrdersScreen extends Component {
         clearTimeout(this.polling);
     }
 
-    mounted() {
-        super.mounted()
-        console.log("mounted");
-        let self = this;
+    // mounted() {
+    //     super.mounted()
+    //     console.log("mounted");
+    //     let self = this;
 
-        var res = new Promise(function (resolve, reject) {
-            clearTimeout(self.polling);
+    //     var res = new Promise(function (resolve, reject) {
+    //         clearTimeout(self.polling);
 
-            self.polling = setInterval(function () {
-                console.log('_poll_for_zmall_response');
+    //         self.polling = setInterval(function () {
+    //             console.log('_poll_for_zmall_response');
 
-                if (this.was_cancelled) {
-                    console.log('was_cancelled');
+    //             if (this.was_cancelled) {
+    //                 console.log('was_cancelled');
 
-                    resolve(false);
-                    return Promise.resolve();
-                }
+    //                 resolve(false);
+    //                 return Promise.resolve();
+    //             }
 
-                self.getOrdersFromBackEnd().catch(function (data) {
-                    if (self.remaining_polls != 0) {
-                        self.remaining_polls--;
-                    } else {
-                        reject();
-                        // self.poll_error_order = self.pos.get_order();
-                        return self._handle_odoo_connection_failure(data);
-                    }
-                    return Promise.reject(data);
-                }).then(function (status) {
-                    console.log("ROSOLVED")
-                    resolve(true);
-                    self.render();
-                });
+    //             self.getOrdersFromBackEnd().catch(function (data) {
+    //                 if (self.remaining_polls != 0) {
+    //                     self.remaining_polls--;
+    //                 } else {
+    //                     reject();
+    //                     // self.poll_error_order = self.pos.get_order();
+    //                     return self._handle_odoo_connection_failure(data);
+    //                 }
+    //                 return Promise.reject(data);
+    //             }).then(function (status) {
+    //                 console.log("ROSOLVED")
+    //                 resolve(true);
+    //                 self.render();
+    //             });
 
-            }, 5000);
-        });
+    //         }, 5000);
+    //     });
 
-        // make sure to stop polling when we're done
-        res.then(function () {
-            console.log("RES THEN CALLED")
-            self._reset_state();
-        });
-    }
+    //     // make sure to stop polling when we're done
+    //     res.then(function () {
+    //         console.log("RES THEN CALLED")
+    //         self._reset_state();
+    //     });
+    // }
 
     willUnmount() {
         super.willUnmount()
@@ -543,7 +615,7 @@ export class DeliveryOrdersScreen extends Component {
         }
     }
 
-    async clickCartButton(event) {
+    clickCartButton(event) {
         // this.trigger('zmallClickProduct', this.zmallproduct);
         console.log("=======>>> clickCartButton");
         console.log(event);
@@ -575,69 +647,304 @@ export class DeliveryOrdersScreen extends Component {
 
      
 
-        await this.popup.add('PopUpZmallCart', {
-            confirmText: 'Change Status',
-            cancelText: 'Close',
-            title: 'Order Cart',
-            items: list
-        });
+        // this.popup.add(confirmpopup, {
+        //     confirmText: 'Change Status',
+        //     cancelText: 'Close',
+        //     title: 'Order Cart',
+        //     items: list
+        // });
+        // const { confirmed } =  this.popup.add(ConfirmPopup, {
+        //     title: _t("Change Status"),
+        //     body: _t("Do you want to Change Status?"),
+        // });
 
     }
 
-    async clickOrderLine(event) {
+    // async clickOrderLine(event) {
+    //     let self = this;
+    //     console.log("============ORDER_CLICK============");
+    //     console.log(event);
+    //     let order_status_code = event.order_status;
+
+    //     await this.popup.add('SelectionPopup', {
+    //         title: _t('Change Order Status'),
+    //         list: [
+    //             {
+    //                 id: 1,
+    //                 item: 1,
+    //                 label: "New",
+    //                 imageUrl: "/pos_zmall/static/description/created.png",
+    //                 isSelected: this.isItemSelected(1, event.order_status)
+    //             },
+    //             {
+    //                 id: 3,
+    //                 item: 3,
+    //                 label: "Accepted",
+    //                 imageUrl: "/pos_zmall/static/description/accepted.png",
+    //                 isSelected: this.isItemSelected(3, event.order_status)
+    //             },
+    //             {
+    //                 id: 5,
+    //                 item: 5,
+    //                 label: "Prepared",
+    //                 imageUrl: "/pos_zmall/static/description/prepared.png",
+    //                 isSelected: this.isItemSelected(5, event.order_status)
+    //             },
+    //             {
+    //                 id: 7,
+    //                 item: 7,
+    //                 label: "Ready",
+    //                 imageUrl: "/pos_zmall/static/description/ready.png",
+    //                 isSelected: this.isItemSelected(7, event.order_status)
+    //             }
+    //         ]
+    //     }).then(async (selectedstatus) => {
+    //         if (selectedstatus) {
+    //             if (selectedstatus.payload <= order_status_code) {
+    //                 await this.popup.add('ErrorPopup', {
+    //                     title: _t('Invalid Action'),
+    //                     body: _t('Can not revert back to status that has been passed')
+    //                 })
+    //             }
+    //             else {
+    //                 let { confirmed, payload: result } = await this.popup.add('ConfirmPopup', {
+    //                     title: _t('Confirmation'),
+    //                     body: _t('Please double check because this step can not be reversed?')
+    //                 })
+    //                 if (confirmed) {
+    //                     let storeId = window.localStorage.getItem("store_id");
+    //                     let serverToken = window.localStorage.getItem("server_token");
+    //                     console.log("CHANGE ORDER STATUS");
+    //                     console.log("Order ID => " + event.zmall_order_id + " TO Status => " + selectedstatus.payload);
+    //                     console.log({
+    //                         "order_id": event.zmall_order_id,
+    //                         "order_status": selectedstatus.payload,
+    //                         "server_token": serverToken,
+    //                         "store_id": storeId
+    //                     });
+    //                     let data = {
+    //                         "config_id": this.env.pos.config_id,
+    //                         "order_id": event.zmall_order_id,
+    //                         "order_status": selectedstatus.payload,
+    //                         "server_token": serverToken,
+    //                         "store_id": storeId
+    //                     };
+
+    //                     let changestatresult = await self.setOrdersStatus(data);
+    //                     // await self.setOrdersStatus(data).then(async (selectedstatus) => {
+
+    //                     // });
+
+    //                     console.log("===================== setOrdersStatus result =====================");
+    //                     console.log(changestatresult);
+    //                     console.log("===================== setOrdersStatus result =====================");
+
+    //                     if (changestatresult) {
+    //                         self.env.pos.alert_message({
+    //                             title: _t('Info'),
+    //                             body: _t('Status Changed Successfully'),
+    //                         });
+    //                     }
+    //                     else {
+    //                         self.env.pos.alert_message({
+    //                             title: _t('Warning'),
+    //                             body: _t('Error Occured Stauts Not Changed'),
+    //                         });
+    //                     }
+    //                 }
+    //             }
+    //         }
+
+    //     });
+    // }
+
+
+    //  clickOrderLine(event) {
+    //     let self = this;
+    //     console.log("============ORDER_CLICK============");
+    //     console.log(event);
+    //     let order_status_code = event.order_status;
+    
+    //     let selectedstatus =  this.popup.add('SelectionPopup', {
+    //         title: _t('Change Order Status'),
+    //         list: [
+    //             {
+    //                 id: 1,
+    //                 item: 1,
+    //                 label: "New",
+    //                 imageUrl: "/pos_zmall/static/description/created.png",
+    //                 isSelected: this.isItemSelected(1, event.order_status)
+    //             },
+    //             {
+    //                 id: 3,
+    //                 item: 3,
+    //                 label: "Accepted",
+    //                 imageUrl: "/pos_zmall/static/description/accepted.png",
+    //                 isSelected: this.isItemSelected(3, event.order_status)
+    //             },
+    //             {
+    //                 id: 5,
+    //                 item: 5,
+    //                 label: "Prepared",
+    //                 imageUrl: "/pos_zmall/static/description/prepared.png",
+    //                 isSelected: this.isItemSelected(5, event.order_status)
+    //             },
+    //             {
+    //                 id: 7,
+    //                 item: 7,
+    //                 label: "Ready",
+    //                 imageUrl: "/pos_zmall/static/description/ready.png",
+    //                 isSelected: this.isItemSelected(7, event.order_status)
+    //             }
+    //         ]
+    //     });
+    
+    //     if (selectedstatus) {
+    //         if (selectedstatus.payload <= order_status_code) {
+    //              this.popup.add('ErrorPopup', {
+    //                 title: _t('Invalid Action'),
+    //                 body: _t('Can not revert back to status that has been passed')
+    //             });
+    //         } else {
+    //             let { confirmed, payload: result } =  this.popup.add('ConfirmPopup', {
+    //                 title: _t('Confirmation'),
+    //                 body: _t('Please double check because this step can not be reversed?')
+    //             });
+    
+    //             if (confirmed) {
+    //                 let storeId = window.localStorage.getItem("store_id");
+    //                 let serverToken = window.localStorage.getItem("server_token");
+    //                 console.log("CHANGE ORDER STATUS");
+    //                 console.log("Order ID => " + event.zmall_order_id + " TO Status => " + selectedstatus.payload);
+    //                 console.log({
+    //                     "order_id": event.zmall_order_id,
+    //                     "order_status": selectedstatus.payload,
+    //                     "server_token": serverToken,
+    //                     "store_id": storeId
+    //                 });
+    //                 let data = {
+    //                     "config_id": this.env.pos.config_id,
+    //                     "order_id": event.zmall_order_id,
+    //                     "order_status": selectedstatus.payload,
+    //                     "server_token": serverToken,
+    //                     "store_id": storeId
+    //                 };
+    
+    //                 let changestatresult =  self.setOrdersStatus(data);
+    
+    //                 console.log("===================== setOrdersStatus result =====================");
+    //                 console.log(changestatresult);
+    //                 console.log("===================== setOrdersStatus result =====================");
+    
+    //                 if (changestatresult) {
+    //                     self.env.pos.alert_message({
+    //                         title: _t('Info'),
+    //                         body: _t('Status Changed Successfully'),
+    //                     });
+    //                 } else {
+    //                     self.env.pos.alert_message({
+    //                         title: _t('Warning'),
+    //                         body: _t('Error Occured Stauts Not Changed'),
+    //                     });
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+
+   async clickOrderLineEtta(event) {
         let self = this;
         console.log("============ORDER_CLICK============");
         console.log(event);
         let order_status_code = event.order_status;
+        console.log(order_status_code);
 
-        await this.popup.add('SelectionPopup', {
+        // const { confirmed } =  this.popup.add(ConfirmPopup, {
+        //     title: _t(" click orderline "),
+        //     body: _t("click orderline?"),
+        // });
+        // console.log("the result is" + confirmed);
+        // if (confirmed){
+        //     return "test1";
+        // }
+
+    
+        console.log("show popup");
+
+        // const { confirmed, payload: selectedOption } = await this.popup.add(SelectionPopup, {
+        //     title: _t("What do you want to do?"),
+        //     list: [
+        //         { id: "0", label: _t("Settle the order"), item: "settle" },
+        //         {
+        //             id: "1",
+        //             label: _t("Apply a down payment (percentage)"),
+        //             item: "dpPercentage",
+        //         },
+        //         {
+        //             id: "2",
+        //             label: _t("Apply a down payment (fixed amount)"),
+        //             item: "dpAmount",
+        //         },
+        //     ],
+        // });
+        // const { confirmed, payload: selectedOption } = , also removed this because it is creating destructure problem
+        await this.popup.add(SelectionPopup, {
             title: _t('Change Order Status'),
             list: [
                 {
                     id: 1,
                     item: 1,
-                    label: "New",
-                    imageUrl: "/pos_zmall/static/description/created.png",
+                    label: _t("New"),
+                    imageUrl: "/pos_etta/static/description/created.png",
                     isSelected: this.isItemSelected(1, event.order_status)
+                    
                 },
                 {
                     id: 3,
                     item: 3,
                     label: "Accepted",
-                    imageUrl: "/pos_zmall/static/description/accepted.png",
+                    imageUrl: "/pos_etta/static/description/accepted.png",
                     isSelected: this.isItemSelected(3, event.order_status)
                 },
                 {
                     id: 5,
                     item: 5,
                     label: "Prepared",
-                    imageUrl: "/pos_zmall/static/description/prepared.png",
+                    imageUrl: "/pos_etta/static/description/prepared.png",
                     isSelected: this.isItemSelected(5, event.order_status)
                 },
                 {
                     id: 7,
                     item: 7,
                     label: "Ready",
-                    imageUrl: "/pos_zmall/static/description/ready.png",
+                    imageUrl: "/pos_etta/static/description/ready.png",
                     isSelected: this.isItemSelected(7, event.order_status)
                 }
             ]
-        }).then(async (selectedstatus) => {
+        }).then( async (selectedstatus) => {
+            console.log("after the popup is selected")
+            console.log(selectedstatus)
+            console.log("order status code:"+ order_status_code)
             if (selectedstatus) {
                 if (selectedstatus.payload <= order_status_code) {
-                    await this.popup.add('ErrorPopup', {
+                     this.popup.add(ErrorPopup, {
                         title: _t('Invalid Action'),
                         body: _t('Can not revert back to status that has been passed')
-                    })
-                }
-                else {
-                    let { confirmed, payload: result } = await this.popup.add('ConfirmPopup', {
+                    });
+                } else {
+                    // let { confirmed} , it was like this but this thing creates a distructuring issue.
+                   let {confirmed} =  await this.popup.add(ConfirmPopup, {
                         title: _t('Confirmation'),
                         body: _t('Please double check because this step can not be reversed?')
-                    })
-                    if (confirmed) {
+                    });
+                    console.log("after confirmation:" + confirmed);
+                    
+    
+                    // if (confirmed) {
+                    if (confirmed){
                         let storeId = window.localStorage.getItem("store_id");
                         let serverToken = window.localStorage.getItem("server_token");
+                        console.log("inside true");
                         console.log("CHANGE ORDER STATUS");
                         console.log("Order ID => " + event.zmall_order_id + " TO Status => " + selectedstatus.payload);
                         console.log({
@@ -647,38 +954,36 @@ export class DeliveryOrdersScreen extends Component {
                             "store_id": storeId
                         });
                         let data = {
-                            "config_id": this.env.pos.config_id,
+                            "config_id": this.pos.config.id,
                             "order_id": event.zmall_order_id,
                             "order_status": selectedstatus.payload,
                             "server_token": serverToken,
                             "store_id": storeId
                         };
-
-                        let changestatresult = await self.setOrdersStatus(data);
-                        // await self.setOrdersStatus(data).then(async (selectedstatus) => {
-
-                        // });
-
+                        console.log("data"+data);
+    
+                        let changestatresult = self.setOrdersStatus(data);
+    
                         console.log("===================== setOrdersStatus result =====================");
                         console.log(changestatresult);
                         console.log("===================== setOrdersStatus result =====================");
-
+    
                         if (changestatresult) {
-                            self.env.pos.alert_message({
-                                title: _t('Info'),
-                                body: _t('Status Changed Successfully'),
-                            });
-                        }
-                        else {
-                            self.env.pos.alert_message({
-                                title: _t('Warning'),
-                                body: _t('Error Occured Stauts Not Changed'),
-                            });
+                            console.log("status changed successfully");
+                            // self.popup.add(notification,{
+                            //     title: _t('Info'),
+                            //     body: _t('Status Changed Successfully'),
+                            // });
+                        } else {
+                            console.log("error occured stauts not changed");
+                            // self.popup.add(notification,{
+                            //     title: _t('Warning'),
+                            //     body: _t('Error Occured Stauts Not Changed'),
+                            // });
                         }
                     }
                 }
             }
-
         });
     }
 

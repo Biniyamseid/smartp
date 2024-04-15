@@ -30,7 +30,7 @@
                                 </div>
                             </div>
                               
-                            <div class="custom-select1">
+                            <!-- <div class="custom-select1">
                                 <div class="selected-option">Options</div>
                                 <div class="options">
                                     <div class="option">Option 1</div>
@@ -38,7 +38,7 @@
                                     <div class="option">Option 3</div>
                                     <div class="option">Option 4</div>
                                 </div>
-                            </div>
+                            </div> -->
                         </header>
 
                         
@@ -96,22 +96,23 @@
                                                 <t t-esc="getElapsedTime(move.created_at)"/>
                                             </span>
                                         </td>
+                                        <!-- t-on-click="() => this.onClickSignInOut() -->
                                         <td style="text-align: center">
                                             <t t-if="move.order_status == 1">
-                                                <button t-on-click="clickOrderLine(move)" class="highlight">New</button>
+                                                <button t-on-click="()=> this.clickOrderLineEtta(move)" class="highlight">New</button>
                                             </t>
                                             <t t-if="move.order_status == 3">
-                                                <button t-on-click="clickOrderLine(move)" class="highlight">Accepted</button>
+                                                <button t-on-click="() => this.clickOrderLineEtta(move)" class="highlight">Accepted</button>
                                             </t>
                                             <t t-if="move.order_status == 5">
-                                                <button t-on-click="clickOrderLine(move)" class="highlight">Prepared</button>
+                                                <button t-on-click=" ()=> this.clickOrderLineEtta(move)" class="highlight">Prepared</button>
                                             </t>
                                             <t t-if="move.order_status == 7">
-                                                <button t-on-click="clickOrderLine(move)" class="highlight">Ready</button>
+                                                <button t-on-click="()=> clickOrderLineEtta(move)" class="highlight">Ready</button>
                                             </t>
                                         </td>
                                         <td style="text-align: center">
-                                            <button t-on-click="clickCartButton(move)" class="highlight">View</button>
+                                            <button t-on-click="()=> this.clickCartButton(move)" class="highlight">View</button>
                                         </td>
                                     </tr>
                                     <t t-set="number" t-value="number +1"/>
