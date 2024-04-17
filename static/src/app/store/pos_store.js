@@ -17,5 +17,13 @@ patch(PosStore.prototype, {
         await super._processData(...arguments);
         this.void_reasons = loadedData["void.reason"];
         this.taxes = loadedData["account.tax"];
+    },
+    async selectZmallOrder() {
+        const { confirmed, payload: newPartner } = await this.showTempScreen("PartnerListScreen", {
+            
+        });
+        // if (confirmed) {
+        //     currentOrder.set_partner(newPartner);
+        // }
     }
 });

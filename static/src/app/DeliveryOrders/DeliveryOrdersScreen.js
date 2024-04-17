@@ -7,7 +7,7 @@
 
 
 import { registry } from "@web/core/registry";
-import { Component, useState, onMounted, useExternalListener,onWillStart,useListener } from "@odoo/owl";
+import { Component, useState, onMounted, useExternalListener,onWillStart,useListener ,onWillUnmount, useRef} from "@odoo/owl";
 import { usePos } from "@point_of_sale/app/store/pos_hook";
 import { useService } from "@web/core/utils/hooks";
 import { _t } from "@web/core/l10n/translation";
@@ -33,6 +33,23 @@ import { ConfirmPopup } from "@point_of_sale/app/utils/confirm_popup/confirm_pop
 import { OrderWidget } from "@point_of_sale/app/generic_components/order_widget/order_widget";
 import { SelectionPopup } from "@point_of_sale/app/utils/input_popups/selection_popup";
 import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
+
+
+
+
+
+import { debounce } from "@web/core/utils/timing";
+
+import { useAsyncLockedMethod } from "@point_of_sale/app/utils/hooks";
+import { session } from "@web/session";
+import { PartnerDetailsEdit } from "@point_of_sale/app/screens/partner_list/partner_editor/partner_editor";
+import { DeliverOrderEdit } from "./DeliveryOrderEditor";
+
+import { PartnerLine } from "@point_of_sale/app/screens/partner_list/partner_line/partner_line";
+import { DeliveryOrderLine } from "./DeliveryOrderLine";
+
+
+
 // import { jsonrpc } from "@web/core/network/rpc_service";
 
 // import { Component, hooks } from "@odoo/owl";
@@ -47,7 +64,7 @@ import { posBusService } from "@point_of_sale/app/bus/pos_bus_service";
 //     type: 'setloading',
 //     payload: true,
 // });
-import { debounce } from "@web/core/utils/timing";
+
 
 
 import { hooks } from '@odoo/owl';
@@ -58,14 +75,18 @@ import { hooks } from '@odoo/owl';
 
 export class DeliveryOrdersScreen extends Component {
     static template = "pos_etta.DeliveryOrdersScreen";
-    
+    static components = { DeliverOrderEdit,PartnerDetailsEdit, DeliveryOrderLine };
 
     constructor() {
         super(...arguments);
+       
+        this.clickOrderLineEtta = this.clickOrderLineEtta.bind(this);
+      
         
         console.log(this.env.pos);
         console.log(this.env.services.pos.db);
         this.state = {
+            zmallorders : {},
             // moves: this.env.pos.db.get_invoices(),
             moves :this.env.services.pos.db,
             query: null,
@@ -84,27 +105,27 @@ export class DeliveryOrdersScreen extends Component {
             
         });
 
-        this.env.services.pos_bus.bus_service.addEventListener('setloading', ({ detail }) => {
-            console.log("on setloading")
-            this.this.setLoading();
-        });
-        this.env.services.pos_bus.bus_service.addEventListener('authzmall', ({ detail }) => {
-            console.log("on authzmall")
-            this.authZmall();
-        });
-        this.env.services.pos_bus.bus_service.addEventListener('filter-selected', ({ detail }) => {
-            console.log("on filter-selected")
-            this._onFilterSelected();
-        });
-        this.env.services.pos_bus.bus_service.addEventListener('search', ({ detail }) => {
-            console.log("on search event")
-            this._onSearch();
+        // this.env.services.pos_bus.bus_service.addEventListener('setloading', ({ detail }) => {
+        //     console.log("on setloading")
+        //     this.this.setLoading();
+        // });
+        // this.env.services.pos_bus.bus_service.addEventListener('authzmall', ({ detail }) => {
+        //     console.log("on authzmall")
+        //     this.authZmall();
+        // });
+        // this.env.services.pos_bus.bus_service.addEventListener('filter-selected', ({ detail }) => {
+        //     console.log("on filter-selected")
+        //     this._onFilterSelected();
+        // });
+        // this.env.services.pos_bus.bus_service.addEventListener('search', ({ detail }) => {
+        //     console.log("on search event")
+        //     this._onSearch();
             
-        });
-        this.env.services.pos_bus.bus_service.addEventListener('event-keyup-search-order', ({ detail }) => {
-            console.log("event-keyup-search-order")
-            this._eventKeyupSearchOrder();
-        });
+        // });
+        // this.env.services.pos_bus.bus_service.addEventListener('event-keyup-search-order', ({ detail }) => {
+        //     console.log("event-keyup-search-order")
+        //     this._eventKeyupSearchOrder();
+        // });
         // useListener('setloading', this.setLoading);
         // useListener('authzmall', this.authZmall);
         // useListener('filter-selected', this._onFilterSelected);
@@ -117,6 +138,7 @@ export class DeliveryOrdersScreen extends Component {
         // this.moves = this.env.pos.db.get_invoices();
 
         this.loading = false;
+        this.state.zmallorders = {}
         // this.zmallproduct = [];
         //check if zmall product exists
         console.log("before checking check zmall product exists");
@@ -126,7 +148,22 @@ export class DeliveryOrdersScreen extends Component {
 
 
     setup() {
+        // this.authZmall();
+        let self = this;
+        console.log("hello this is setup");
         super.setup();
+
+        this.ui = useState(useService("ui"));
+        this.notification = useService("pos_notification");
+        this.searchWordInputRef = useRef("search-word-input-partner");
+        this.state.zmallorders = {}
+
+
+        this.updatePartnerList = debounce(this.updatePartnerList, 70);
+        this.saveChanges = useAsyncLockedMethod(this.saveChanges);
+        onWillUnmount(this.updatePartnerList.cancel);
+        this.partnerEditor = {}; // create an imperative handle for PartnerDetailsEdit
+        this.orderEditor = {};
         this.notif = useService('notification');
         this.env.services.notification = useService('notification');
         // this.notification = useService("pos_notification");
@@ -143,43 +180,82 @@ export class DeliveryOrdersScreen extends Component {
 
         this.env.services.pos_bus.bus_service.trigger('myEvent', { myData: 'Hello, world!' });
         console.log("mounted from setup");
+        this.state = useState({
+            query: null,
+            selectedPartner: this.props.partner,
+            selectedOrder : this.props.order,
+            detailIsShown: this.props.editModeProps ? true : false,
+            editModeProps: {
+                partner: this.props.editModeProps ? this.props.partner : null,
+                missingFields: this.props.missingFields ? this.props.missingFields : null,
+            },
+            previousQuery: "",
+            currentOffset: 0,
+        });
+
     //     let self = this;
         
-    
-        this.polling = null;
+   
+    self.authZmall();
+
+    console.log("module is mounted successfully from setup");
+
+    if (this.polling) {
+        clearInterval(this.polling);
     }
+    this.res = {};
     
-    onMounted() {
-            let self = this;
-            self.polling = setInterval(function () {
-                console.log('_poll_for_zmall_response');
 
-                if (this.was_cancelled) {
-                    console.log('was_cancelled');
+    this.polling = setInterval(() => {
+            this.res = this.pollForOrders();
+            this.res.then(function(value) {
+                console.log("Resolved value: ", value);
+            }).catch(function(error) {
+                console.log("Error: ", error);
+            });
+        }, 5000);
+    
+    this.polling = null;
+};
 
-                    resolve(false);
-                    return Promise.resolve();
-                }
 
-                self.getOrdersFromBackEnd().catch(function (data) {
-                    if (self.remaining_polls != 0) {
-                        self.remaining_polls--;
-                    } else {
-                        reject();
-                        // self.poll_error_order = self.pos.get_order();
-                        return self._handle_odoo_connection_failure(data);
-                    }
-                    return Promise.reject(data);
-                }).then(function (status) {
-                    console.log(status);
-                    console.log("ROSOLVED")
 
-                    resolve(true);
-                    self.render();
-                });
 
-            }, 5000);
-    }
+
+
+    
+// onWillStart() {
+//             let self = this;
+//             console.log("on onWillstart := module is mounted successfully");
+//             self.polling = setInterval(function () {
+//                 console.log('_poll_for_zmall_response');
+
+//                 if (this.was_cancelled) {
+//                     console.log('was_cancelled');
+
+//                     resolve(false);
+//                     return Promise.resolve();
+//                 }
+
+//                 self.getOrdersFromBackEnd().catch(function (data) {
+//                     if (self.remaining_polls != 0) {
+//                         self.remaining_polls--;
+//                     } else {
+//                         reject();
+//                         // self.poll_error_order = self.pos.get_order();
+//                         return self._handle_odoo_connection_failure(data);
+//                     }
+//                     return Promise.reject(data);
+//                 }).then(function (status) {
+//                     console.log(status);
+//                     console.log("ROSOLVED")
+
+//                     resolve(true);
+//                     self.render();
+//                 });
+
+//             }, 5000);
+//     }
     
     willUnmount() {
         clearInterval(this.polling);
@@ -357,6 +433,18 @@ export class DeliveryOrdersScreen extends Component {
     setLoading(loading) {
         this.state.loading = loading;
     }
+    setZmallOrders(values){
+        console.log("in setzmallorders");
+        this.state.zmallorders = values;
+        console.log("+++====>>>>  this.state.zmallorders = ", JSON.stringify(this.state.zmallorders, null, 2));
+        
+    }
+    getZmallorders(){
+        console.log("get zmall orders ths.state.zmallorders = "+this.state.zmallorders);
+        return this.state.zmallorders;
+        
+
+    }
     // ----------------------------------------------------------------------------------------------------------------
 
     openCompanyProfile() {
@@ -383,9 +471,10 @@ export class DeliveryOrdersScreen extends Component {
         let self = this;
         self.setLoading(true);
         console.log("check properties of authzmall");
+        console.log("in authzmall")
 
-        console.log(this.pos)
-        console.log(this.pos.config.id)
+        console.log("this.pos"+this.pos)
+        console.log("this.pos.config.id"+this.pos.config.id)
         console.log(this.pos.config_id)
         // await this.rpc({
             await jsonrpc('/web/dataset/call_kw/pos.config/auth_zmall/',{
@@ -413,9 +502,32 @@ export class DeliveryOrdersScreen extends Component {
         });
     }
 
+    async  pollForOrders() {
+        console.log('_poll_for_zmall_response');
+    
+        if (this.was_cancelled) {
+            console.log('was_cancelled');
+            return false;
+        }
+    
+        try {
+            let status = await this.getOrdersFromBackEnd();
+            console.log("ROSOLVED");
+            this.render();
+            return true;
+        } catch (data) {
+            if (this.remaining_polls != 0) {
+                this.remaining_polls--;
+            } else {
+                this._handle_odoo_connection_failure(data);
+                throw data;
+            }
+        }
+    }
+
     async getOrdersData() {
         let self = this;
-        await this.authZmall();
+        // await this.authZmall();
         self.setLoading(true);
         let storeId = window.localStorage.getItem("store_id");
         let serverToken = window.localStorage.getItem("server_token");
@@ -446,7 +558,9 @@ export class DeliveryOrdersScreen extends Component {
             console.log(values);
             window.localStorage.setItem("livedata", JSON.stringify(values));
             // this.state.zmallorders = values;
+            self.setZmallOrders(values);
             return values;
+
         }, function (err) {
             self.setLoading(false);
             console.log("=========err=========");
@@ -573,21 +687,21 @@ export class DeliveryOrdersScreen extends Component {
         this.render()
     }
 
-    back() {
-        if (this.state.detailIsShown || this.state.productSyncPageIsShown) {
-            this.state.detailIsShown = false;
-            this.state.productSyncPageIsShown = false;
-            this.render();
-        } else {
-            this.props.resolve({ confirmed: false, payload: false });
-            this.trigger('close-temp-screen');
-        }
-    }
+    // back() {
+    //     if (this.state.detailIsShown || this.state.productSyncPageIsShown) {
+    //         this.state.detailIsShown = false;
+    //         this.state.productSyncPageIsShown = false;
+    //         this.render();
+    //     } else {
+    //         this.props.resolve({ confirmed: false, payload: false });
+    //         this.trigger('close-temp-screen');
+    //     }
+    // }
 
-    confirm() {
-        this.props.resolve({ confirmed: true, payload: this.state.selectedMove });
-        this.trigger('');
-    }
+    // confirm() {
+        // this.props.resolve({ confirmed: true, payload: this.state.selectedMove });
+    //     this.trigger('');
+    // }
 
     get getMoves() {
         return JSON.parse(window.localStorage.getItem("livedata"));
@@ -922,6 +1036,7 @@ export class DeliveryOrdersScreen extends Component {
                 }
             ]
         }).then( async (selectedstatus) => {
+            
             console.log("after the popup is selected")
             console.log(selectedstatus)
             console.log("order status code:"+ order_status_code)
@@ -970,12 +1085,22 @@ export class DeliveryOrdersScreen extends Component {
     
                         if (changestatresult) {
                             console.log("status changed successfully");
+                            this.env.services.notification.add("Status Changed Successfully", {
+                                type: 'info',
+                                sticky: false,
+                                timeout: 10000,
+                            });
                             // self.popup.add(notification,{
                             //     title: _t('Info'),
                             //     body: _t('Status Changed Successfully'),
                             // });
                         } else {
                             console.log("error occured stauts not changed");
+                            this.env.services.notification.add("Error Occured Stauts Not Changed", {
+                                type: 'danger',
+                                sticky: false,
+                                timeout: 10000,
+                            });
                             // self.popup.add(notification,{
                             //     title: _t('Warning'),
                             //     body: _t('Error Occured Stauts Not Changed'),
@@ -1149,6 +1274,195 @@ export class DeliveryOrdersScreen extends Component {
     // ------------------------------------------------------------------------------------------------------
 
 
+
+    // additionals
+        // Lifecycle hooks
+    back(force = false) {
+        console.log("back ===========================+++++>>>>>>>>>  back is clicked");
+        
+        this.pos.closeTempScreen();
+            if (this.state.detailIsShown && !force) {
+                this.state.detailIsShown = false;
+            } else {
+                // this.props.resolve({ confirmed: false, payload: false });
+                this.pos.closeTempScreen();
+            }
+        }
+    
+        goToOrders() {
+            this.back(true);
+            const partner = this.state.editModeProps.partner;
+            const partnerHasActiveOrders = this.pos
+                .get_order_list()
+                .some((order) => order.partner?.id === partner.id);
+            const ui = {
+                searchDetails: {
+                    fieldName: "PARTNER",
+                    searchTerm: partner.name,
+                },
+                filter: partnerHasActiveOrders ? "" : "SYNCED",
+            };
+            this.pos.showScreen("TicketScreen", { ui });
+        }
+    
+        confirm() {
+            // this.resolve({ confirmed: true, payload: this.state.selectedPartner });
+            this.pos.closeTempScreen();
+        }
+        activateEditMode() {
+            this.state.detailIsShown = true;
+        }
+        // Getters
+    
+        get currentOrder() {
+            return this.pos.get_order();
+        }
+    
+        get partners() {
+            // let order =   this.getOrdersFromBackEnd();
+            // console.log("orders"+order)
+            let res;
+            if (this.state.query && this.state.query.trim() !== "") {
+                res = this.pos.db.search_partner(this.state.query.trim());
+            } else {
+                res = this.pos.db.get_partners_sorted(1000);
+            }
+            res.sort(function (a, b) {
+                return (a.name || "").localeCompare(b.name || "");
+            });
+            // the selected partner (if any) is displayed at the top of the list
+            if (this.state.selectedPartner) {
+                const indexOfSelectedPartner = res.findIndex(
+                    (partner) => partner.id === this.state.selectedPartner.id
+                );
+                if (indexOfSelectedPartner !== -1) {
+                    res.splice(indexOfSelectedPartner, 1);
+                }
+                res.unshift(this.state.selectedPartner);
+            }
+            console.log("delevery order Screen js partners res"+ res);
+            // for(let item of res){
+            //     for(let [key, value] of Object.entries(item)){
+            //         console.log(`Key: ${key}, Value: ${value}`);
+            //     }
+            // }
+            return res;
+        }
+        get orders() {
+            let res;
+            // let order =  this.getOrdersFromBackEnd();
+            // console.log("orders"+order)
+            if (this.state.query && this.state.query.trim() !== "") {
+                res = this.pos.db.search_partner(this.state.query.trim());
+            } else {
+                res = this.pos.db.get_partners_sorted(1000);
+            }
+            res.sort(function (a, b) {
+                return (a.name || "").localeCompare(b.name || "");
+            });
+            // the selected partner (if any) is displayed at the top of the list
+            if (this.state.selectedOrder) {
+                const indexOfSelectedPartner = res.findIndex(
+                    (partner) => partner.id === this.state.selectedPartner.id
+                );
+                if (indexOfSelectedPartner !== -1) {
+                    res.splice(indexOfSelectedPartner, 1);
+                }
+                res.unshift(this.state.selectedPartner);
+            }
+            console.log("delevery order Screen js orders res"+ res);
+            return res;
+        }
+        get isBalanceDisplayed() {
+            return false;
+        }
+        get partnerLink() {
+            return `/web#model=res.partner&id=${this.state.editModeProps.partner.id}`;
+        }
+    
+        // Methods
+    
+        async _onPressEnterKey() {
+            if (!this.state.query) {
+                return;
+            }
+            const result = await this.searchPartner();
+            if (result.length > 0) {
+                this.notification.add(
+                    _t('%s customer(s) found for "%s".', result.length, this.state.query),
+                    3000
+                );
+            } else {
+                this.notification.add(_t('No more customer found for "%s".', this.state.query), 3000);
+            }
+        }
+        _clearSearch() {
+            this.searchWordInputRef.el.value = "";
+            this.state.query = "";
+        }
+        // We declare this event handler as a debounce function in
+        // order to lower its trigger rate.
+        async updatePartnerList(event) {
+            this.state.query = event.target.value;
+            clearInterval(this.polling);
+            
+        }
+        clickPartner(partner) {
+            if (this.state.selectedPartner && this.state.selectedPartner.id === partner.id) {
+                this.state.selectedPartner = null;
+            } else {
+                this.state.selectedPartner = partner;
+            }
+            this.confirm();
+        }
+        editPartner(partner) {
+            this.state.editModeProps.partner = partner;
+            this.activateEditMode();
+        }
+        createPartner() {
+            // initialize the edit screen with default details about country, state, and lang
+            const { country_id, state_id } = this.pos.company;
+            this.state.editModeProps.partner = { country_id, state_id, lang: session.user_context.lang };
+            this.activateEditMode();
+        }
+        async saveChanges(processedChanges) {
+            const partnerId = await this.orm.call("res.partner", "create_from_ui", [processedChanges]);
+            await this.pos.load_new_partners();
+            this.state.selectedPartner = this.pos.db.get_partner_by_id(partnerId);
+            this.confirm();
+        }
+        async searchPartner() {
+            if (this.state.previousQuery != this.state.query) {
+                this.state.currentOffset = 0;
+            }
+            const result = await this.getNewPartners();
+            this.pos.addPartners(result);
+            if (this.state.previousQuery == this.state.query) {
+                this.state.currentOffset += result.length;
+            } else {
+                this.state.previousQuery = this.state.query;
+                this.state.currentOffset = result.length;
+            }
+            return result;
+        }
+        async getNewPartners() {
+            let domain = [];
+            const limit = 30;
+            if (this.state.query) {
+                const search_fields = ["name", "parent_name", "phone_mobile_search", "email"];
+                domain = [
+                    ...Array(search_fields.length - 1).fill('|'),
+                    ...search_fields.map(field => [field, "ilike", this.state.query + "%"])
+                ];
+            }
+            // FIXME POSREF timeout
+            const result = await this.orm.silent.call(
+                "pos.session",
+                "get_pos_ui_res_partner_by_params",
+                [[odoo.pos_session_id], { domain, limit: limit, offset: this.state.currentOffset }]
+            );
+            return result;
+        }
 
 
 

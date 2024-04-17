@@ -2,48 +2,44 @@
 <templates id="template" xml:space="preserve">
 
     <t t-name="pos_etta.DeliveryOrdersScreen">
-        <div class="ticket-screen screen">
-            <div id="loading-overlay">
-            </div>
-            <div class="screen-content">
-               
-                
-                <div t-if="state.detailIsShown" class="client-details-contents subwindow-container-fix">
-                    <CompanyProfile move="move" t-props="state.selectedMove"/>
-                  
+        <div class="partnerlist-screen screen h-100 d-flex flex-column bg-100">
+            <div class="top-content d-flex align-items-center p-2 border-bottom text-center">
+                <div class="button highlight btn btn-lg btn-primary" t-if="state.detailIsShown" t-on-click="() => this.partnerEditor.save()">
+                    <i t-if="ui.isSmall" class="fa fa-floppy-o"/>
+                    <t t-else="">
+                        <span> Save</span>
+                    </t>
                 </div>
-                
-                <div t-if="state.productSyncPageIsShown">
-                    <ProductSync move="move" t-props="state.selectedMove"/>
+                <button t-if="!state.detailIsShown" class="button new-customer highlight btn btn-lg btn-primary" role="img" aria-label="Add a customer"
+                        t-on-click="createPartner"
+                        title="Add a customer">
+                    <i t-if="ui.isSmall" class="fa fa-plus"/>
+                    <t t-else=""> Create</t>
+                </button>
+                <div class="button back btn btn-lg btn-secondary mx-2" t-on-click="back">
+                    <i t-if="ui.isSmall" class="fa fa-angle-double-left"/>
+                    <t t-else=""> Discard</t>
                 </div>
-
-                <div style="overflow: auto; display:flex; height:100%" t-if="!state.detailIsShown and !state.productSyncPageIsShown">
-                    <div style="overflow: auto; display:flex; flex-direction: column;padding: 14px; height: 100%; width:100%">
-                        <header class="top_order">
-                            <div class="zoorya_searchbar1">
-                                <div class="inputBox_container">
-                                    <!-- <svg class="search_icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" alt="search icon">
-                                      <path d="M46.599 46.599a4.498 4.498 0 0 1-6.363 0l-7.941-7.941C29.028 40.749 25.167 42 21 42 9.402 42 0 32.598 0 21S9.402 0 21 0s21 9.402 21 21c0 4.167-1.251 8.028-3.342 11.295l7.941 7.941a4.498 4.498 0 0 1 0 6.363zM21 6C12.717 6 6 12.714 6 21s6.717 15 15 15c8.286 0 15-6.714 15-15S29.286 6 21 6z">
-                                      </path>
-                                    </svg> -->
-                                    <input class="inputBox" id="inputBox" type="text" placeholder="Search Zmall Order"/>
-                                </div>
+                <div class="top-right-buttons d-flex gap-2 w-100 justify-content-end">
+                    <div t-if="state.detailIsShown and state.editModeProps.partner.id" class="button more-info">
+                        <a t-on-click="goToOrders" class="btn btn-lg btn-outline-secondary" target="_blank"> Orders </a>
+                    </div>
+                    <div t-if="state.detailIsShown &amp;&amp; state.editModeProps.partner.id" class="button more-info">
+                        <a t-att-href="partnerLink" class="btn btn-lg btn-outline-secondary" target="_blank"> More info</a>
+                    </div>
+                    <div class="search-bar-container sb-partner d-flex align-items-center w-100 w-lg-50 h-100 h-100" t-if="!state.detailIsShown">
+                        <div class="input-group h-100">
+                            <div class="pos-search-bar form-control d-flex align-items-center bg-view">
+                                <i class="oi oi-search me-2" t-on-click="_onPressEnterKey"/>
+                                <input class="flex-grow-1 w-auto h-100 border-0 p-2 me-4" type="text" autofocus="autofocus" t-ref="search-word-input-partner" placeholder="Search Customers..." size="1" t-on-keyup="updatePartnerList" />
+                                <i class="fa fa-times position-absolute end-0 me-2 pe-1 cursor-pointer" t-on-click="_clearSearch"/>
                             </div>
-                              
-                            <!-- <div class="custom-select1">
-                                <div class="selected-option">Options</div>
-                                <div class="options">
-                                    <div class="option">Option 1</div>
-                                    <div class="option">Option 2</div>
-                                    <div class="option">Option 3</div>
-                                    <div class="option">Option 4</div>
-                                </div>
-                            </div> -->
-                        </header>
-
-                        
-                    
-                    <div class="order_table3">
+                        </div>
+                    </div>
+                </div>
+            </div>
+             
+                    <!-- <div class="order_table3">
 
                             <table class='table1' t-if="getMoves and getMoves.length != 0">
                                 <thead>
@@ -96,7 +92,7 @@
                                                 <t t-esc="getElapsedTime(move.created_at)"/>
                                             </span>
                                         </td>
-                                        <!-- t-on-click="() => this.onClickSignInOut() -->
+                                        t-on-click="() => this.onClickSignInOut()
                                         <td style="text-align: center">
                                             <t t-if="move.order_status == 1">
                                                 <button t-on-click="()=> this.clickOrderLineEtta(move)" class="highlight">New</button>
@@ -118,17 +114,87 @@
                                     <t t-set="number" t-value="number +1"/>
                                 </t>
                             </table>
-                    <t t-else="">
-                        <h1 class="loading-orders">... No Zmall Orders Found ...</h1>
+                            <t t-else="">
+                                <h1 class="loading-orders">... No Zmall Orders Found ...</h1>
+                            </t>
+                    </div> -->
+            <section class="overflow-auto">
+                <t t-if="state.detailIsShown">
+                    <!-- <DeliverOrderEdit 
+                        t-props="state.editModeProps" 
+                        saveChanges.bind="saveChanges" 
+                        imperativeHandle="partnerEditor" /> -->
+                         
+                <!-- <t t-foreach="getMoves" t-as="order"
+                    t-key="order.zmall_order_id"> -->
+                    <!-- <DeliverOrderEdit order="order"
+                                saveChanges.bind="saveChanges"/> -->
+                <!-- </t> -->
+
+                </t>
+               
+
+
+
+
+                <t t-else="">
+                    <table class="partner-list table table-striped w-100">
+                        <thead>
+                            <tr>
+                                <th class="py-2">Name</th>
+                                <th class="py-2">Total Price</th>
+                                <th class="partner-line-email py-2">item</th>
+                                <th class="py-2">State</th>
+                                <th class="pos-right-align py-2" t-if="isBalanceDisplayed">Balance</th>
+                                <th class="partner-line-details py-2"></th>
+                                <th class="partner-line-last-column-placeholder oe_invisible py-2"></th>
+                            </tr>
+                        </thead>
+                        <!-- <tbody class="order-list-contents">
+                        
+                        <t t-if="getMoves" t-foreach="getMoves" t-as="order"
+                            t-key="order.zmall_order_id">
+                            <DeliveryOrderLine order="order"
+                                        selectedOrder="state.selectedOrder"
+                                        onClickEdit.bind="editPartner"
+                                        onClickOrder.bind="clickPartner"/>
+                        </t>
+                    </tbody> -->
+                    <tbody class="order-list-contents">
+                    <t t-if="getMoves" t-foreach="getMoves" t-as="order" t-key="order.zmall_order_id">
+                        <DeliveryOrderLine order="order"
+                                        selectedOrder="state.selectedOrder"
+                                        onClickEdit.bind="editPartner"
+                                        onClickOrder.bind="clickPartner"
+                                        clickOrderLineEtta.bind="clickOrderLineEtta"/>
                     </t>
+                </tbody>
+
+                        <!-- <tbody class="partner-list-contents">
+                            <t t-foreach="partners" t-as="partner"
+                                t-key="partner.id">
+                                <DeliveryOrderLine partner="partner"
+                                            selectedPartner="state.selectedPartner"
+                                            detailIsShown="state.detailIsShown"
+                                            isBalanceDisplayed="isBalanceDisplayed"
+                                            onClickEdit.bind="editPartner"
+                                            onClickPartner.bind="clickPartner"/>
+                            </t>
+                        </tbody> -->
+
+
+                    </table>
+                    <div t-if="state.query" class="search-more-button d-flex justify-content-center my-2">
+                        <button class="btn btn-lg btn-primary" t-on-click="_onPressEnterKey">Search more</button>
                     </div>
-                </div>
-                </div>
-
-
-            </div>
-
+                </t>
+            </section>
         </div>
     </t>
 
 </templates>
+
+
+
+
+

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="point_of_sale.DeliveryOrderLine">
+    <!-- new -->
+            <tr t-attf-class="order-line gap-2 gap-lg-0 align-top {{highlight}}" t-att-data-id="props.order.zmall_order_id"
+            t-on-click="() => this.props.onClickOrder(props.order)">
+            <td>
+                <b>
+                    <t t-esc="props.order.customer_name or ''" />
+                </b>
+                <div class="company-field text-bg-muted">
+                    <t t-esc="props.order.created_at or ''" />
+                </div>
+            </td>
+            <td>
+                <div class="order-line-total-price" t-if="props.order.total_cart_price">
+                    <t t-esc="props.order.total_cart_price" />
+                </div>
+            </td>
+            <td class="order-line-items">
+                <t t-if="props.order and props.order.cart_items and props.order.cart_items.length >0 ">
+                    <t t-if="props.order and Array.isArray(props.order.cart_items)" t-foreach="props.order.cart_items" t-as="item" t-key="item.unique_id">
+                        <div>
+                            <i class="fa fa-fw fa-tag me-2"/><t t-esc="item.full_product_name"/>
+                        </div>
+                    </t>
+                </t>
+            </td>
+            <td style="edit-order-button-cell">
+                                            <t t-if="props.order and props.order.order_status == 1">
+                                                <button t-on-click="()=> this.handleOrderLineClick(props.order)" class="highlight">New</button>
+                                            </t>
+                                            <t t-if="props.order and props.order.order_status == 3">
+                                                <button t-on-click="() => this.handleOrderLineClick(props.order)" class="highlight">Accepted</button>
+                                            </t>
+                                            <t t-if="props.order and props.order.order_status == 5">
+                                                <button t-on-click=" ()=> this.handleOrderLineClick(props.order)" class="highlight">Prepared</button>
+                                            </t>
+                                            <t t-if="props.order and props.order.order_status == 7">
+                                                <button t-on-click="()=> this.handleOrderLineClick(props.order)" class="highlight">Ready</button>
+                                            </t>
+                                        </td>
+            <td class="edit-order-button-cell">
+                <button class="edit-order-button btn btn-light border" t-on-click.stop="() => props.onClickEdit(props.order)">DETAILS</button>
+            </td>
+            <td class="order-line-last-column-placeholder oe_invisible"></td>
+        </tr>
+
+
+        <!-- new -->
+
+
+
+        <!-- <tr t-attf-class="partner-line gap-2 gap-lg-0 align-top {{highlight}}" t-att-data-id="props.partner.id"
+            t-on-click="() => this.props.onClickPartner(props.partner)">
+            <td>
+                <b>
+                    <t t-esc="props.partner.name or ''" />
+                </b>
+                
+                <div class="company-field text-bg-muted">
+                    <t t-esc="props.partner.parent_name or ''" />
+                </div>
+                <button t-if="_isOrderSelected" class="unselect-tag d-lg-inline-block d-none btn btn-light mt-2">
+                    <i class="fa fa-times me-1"></i>
+                    <span> Unselect </span>
+                </button>
+            </td>
+            <td>
+                <div class="partner-line-adress" t-if="props.partner.address">
+                    <t t-esc="props.partner.address" />
+                </div>
+            </td>
+            <td class="partner-line-email ">
+                <div class="mb-2" t-if="props.partner.phone">
+                    <i class="fa fa-fw fa-phone me-2"/><t t-esc="props.partner.phone"/>
+                </div>
+                <div class="mb-2" t-if="props.partner.mobile">
+                    <i class="fa fa-fw fa-mobile me-2"/><t t-esc="props.partner.mobile"/>
+                </div>
+                <div t-if="props.partner.email" class="email-field mb-2">
+                    <i class="fa fa-fw fa-paper-plane-o me-2"/><t t-esc="props.partner.email" />
+                </div>
+            </td>
+            <td class="partner-line-balance" t-if="props.isBalanceDisplayed"></td>
+            <td class="edit-partner-button-cell">
+                <button class="edit-partner-button btn btn-light border" t-on-click.stop="() => props.onClickEdit(props.partner)">DETAILS</button>
+                <button t-if="_isOrderSelected" class="unselect-tag-mobile d-inline-block d-lg-none btn btn-light border ms-2">
+                    <i class="fa fa-times"></i>
+                    <span> UNSELECT </span>
+                </button>
+            </td>
+            <td class="partner-line-last-column-placeholder oe_invisible"></td>
+        </tr> -->
+    </t>
+
+</templates>

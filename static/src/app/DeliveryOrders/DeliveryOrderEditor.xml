@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="point_of_sale.DeliveryOrderEdit">
+        <!-- <section class="order-details edit d-flex flex-column m-3">
+            <div class="container">
+                <div class="order-details-header d-flex pe-2 gap-2">
+                    <input class="detail order-name form-control form-control-lg" t-model="changes.customer_name" name="name" placeholder="Customer Name" />
+                </div>
+                <div class="order-details-box row row-cols-1 row-cols-sm-2 gy-3 mt-3">
+                    <t t-foreach="['zmall_order_id', 'store_id', 'unique_id', 'created_at', 'order_status', 'total_cart_price']" t-as="item" t-key="item">
+                        <div class="order-detail col">
+                            <label class="form-label label" t-attf-for="{{item}}" t-esc="item"/>
+                            <input
+                                class="detail form-control"
+                                t-attf-id="{{item}}"
+                                t-attf-name="{{item}}"
+                                t-model="changes[item]"
+                                t-attf-placeholder="{{item}}" />
+                        </div>
+                    </t>
+                    <div class="order-detail col">
+                        <label class="form-label label" for="cart_items">Cart Items</label>
+                        <t t-foreach="changes.cart_items" t-as="item" t-key="item.unique_id">
+                            <div>
+                                <input class="detail form-control" t-model="item.full_product_name" t-attf-name="cart_items[{{item.unique_id}}]" t-attf-placeholder="Item {{item.unique_id}}" />
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </div>
+        </section> -->
+    </t>
+</templates>

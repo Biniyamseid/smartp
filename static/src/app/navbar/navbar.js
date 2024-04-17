@@ -89,7 +89,8 @@ patch(Navbar.prototype, {
 
     },
     onDeliveryOrderScreenClicked(){
-        this.pos.showScreen("DeliveryOrdersScreen");
+        this.pos.showTempScreen("DeliveryOrdersScreen");
+        // this.pos.showScreen("DeliveryOrdersScreen");
 
     },
     onDeliveryScreenWidgetClicked(){
