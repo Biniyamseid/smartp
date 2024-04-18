@@ -27,7 +27,7 @@
                     <div t-if="state.detailIsShown &amp;&amp; state.editModeProps.partner.id" class="button more-info">
                         <a t-att-href="partnerLink" class="btn btn-lg btn-outline-secondary" target="_blank"> More info</a>
                     </div>
-                    <div class="search-bar-container sb-partner d-flex align-items-center w-100 w-lg-50 h-100 h-100" t-if="!state.detailIsShown">
+                    <!-- <div class="search-bar-container sb-partner d-flex align-items-center w-100 w-lg-50 h-100 h-100" t-if="!state.detailIsShown">
                         <div class="input-group h-100">
                             <div class="pos-search-bar form-control d-flex align-items-center bg-view">
                                 <i class="oi oi-search me-2" t-on-click="_onPressEnterKey"/>
@@ -35,7 +35,24 @@
                                 <i class="fa fa-times position-absolute end-0 me-2 pe-1 cursor-pointer" t-on-click="_clearSearch"/>
                             </div>
                         </div>
+                    </div> -->
+
+
+
+                    <div class="search-bar-container sb-order d-flex align-items-center w-100 w-lg-50 h-100 h-100">
+                        <div class="input-group h-100">
+                            <div class="pos-search-bar form-control d-flex align-items-center bg-view">
+                                <i class="oi oi-search me-2" t-on-click="_onPressEnterKeyOrder"/>
+                                <input class="flex-grow-1 w-auto h-100 border-0 p-2 me-4" type="text" autofocus="autofocus" t-ref="search-word-input-order" placeholder="Search Orders..." size="1" t-on-keyup="updateOrderList" />
+                                <i class="fa fa-times position-absolute end-0 me-2 pe-1 cursor-pointer" t-on-click="_clearSearchOrder"/>
+                            </div>
+                        </div>
                     </div>
+
+
+
+
+
                 </div>
             </div>
              
@@ -166,7 +183,9 @@
                                         selectedOrder="state.selectedOrder"
                                         onClickEdit.bind="editPartner"
                                         onClickOrder.bind="clickPartner"
-                                        clickOrderLineEtta.bind="clickOrderLineEtta"/>
+                                        clickOrderLineEtta.bind="clickOrderLineEtta"
+                                        onClickCartButton.bind="clickCartButton"
+                                        />
                     </t>
                 </tbody>
 

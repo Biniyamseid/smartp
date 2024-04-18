@@ -21,5 +21,10 @@ export class DeliveryOrderLine extends Component {
         
         this.props.clickOrderLineEtta(event);
     }
+    handleonClickCartButton(event) {
+        
+        this.props.onClickCartButton(event);
+    }
+    
  
 }

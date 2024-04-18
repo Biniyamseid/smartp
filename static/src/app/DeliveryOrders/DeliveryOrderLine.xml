@@ -42,7 +42,8 @@
                                             </t>
                                         </td>
             <td class="edit-order-button-cell">
-                <button class="edit-order-button btn btn-light border" t-on-click.stop="() => props.onClickEdit(props.order)">DETAILS</button>
+                <button class="edit-order-button btn btn-light border" t-on-click.stop="() => this.handleonClickCartButton(props.order)">DETAILS</button>
+                <!-- <button class="edit-order-button btn btn-light border" t-on-click.stop="() => props.onClickEdit(props.order)">DETAILS</button> -->
             </td>
             <td class="order-line-last-column-placeholder oe_invisible"></td>
         </tr>

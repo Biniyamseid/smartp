@@ -33,6 +33,8 @@ import { ConfirmPopup } from "@point_of_sale/app/utils/confirm_popup/confirm_pop
 import { OrderWidget } from "@point_of_sale/app/generic_components/order_widget/order_widget";
 import { SelectionPopup } from "@point_of_sale/app/utils/input_popups/selection_popup";
 import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
+import { MoneyDetailsPopup } from "@point_of_sale/app/utils/money_details_popup/money_details_popup";
+
 
 
 
@@ -89,14 +91,15 @@ export class DeliveryOrdersScreen extends Component {
             zmallorders : {},
             // moves: this.env.pos.db.get_invoices(),
             moves :this.env.services.pos.db,
+            queryOrder:null,
             query: null,
             selectedMove: this.props.move,
             detailIsShown: false,
             productSyncPageIsShown: false,
             isEditMode: false,
-            editModeProps: {
-                move: null
-            },
+            // editModeProps: {
+            //     move: null
+            // },
             loading: false,
         };
         this.updateOrderList = debounce(this.updateOrderList, 70);
@@ -186,6 +189,7 @@ export class DeliveryOrdersScreen extends Component {
             selectedOrder : this.props.order,
             detailIsShown: this.props.editModeProps ? true : false,
             editModeProps: {
+                order : this.props.editModeProps ? this.props.order : null,
                 partner: this.props.editModeProps ? this.props.partner : null,
                 missingFields: this.props.missingFields ? this.props.missingFields : null,
             },
@@ -734,13 +738,17 @@ export class DeliveryOrdersScreen extends Component {
         console.log("=======>>> clickCartButton");
         console.log(event);
         let list = [];
+        
 
         for (let index = 0; index < event.cart_items.length; index++) {
+            let customer_name = event['customer_name']
             const item = event.cart_items[index];
             let category_name = item['category_name'];
             let itemname = item['full_product_name'];
             let unique_id = item['unique_id'];
             let note_for_item = item['note_for_item'];
+            let full_product_name = item['full_product_name']
+            let total_item_price = item['total_item_price']
 
             let text = "[" + category_name + "] " + itemname;
             if(note_for_item != ""){
@@ -753,19 +761,57 @@ export class DeliveryOrdersScreen extends Component {
                     'item': index,
                     'category_name': category_name,
                     'itemname': itemname,
-                    'note': note_for_item
+                    'note': note_for_item,
+                    'full_product_name': full_product_name,
+                    'total_item_price': total_item_price,
+                    'customer_name': customer_name
+
+
                 }
             );
 
+            
         }
+        let bodyText = '';
+        for (let i = 0; i < list.length; i++) {
+            if (i>=1){
+                bodyText += "&& ";
+            }
+            // bodyText += `customer:   ${list[i].customer_name}\n`;
+            
+           
+            bodyText += `name: ${list[i].full_product_name}\n`
+            bodyText += "\n";
+            bodyText += `price : ${list[i].total_item_price}\n`;
+            bodyText += `\n`;
+            
+
+
+        }
+        console.log(list);
 
      
 
-        // this.popup.add(confirmpopup, {
-        //     confirmText: 'Change Status',
-        //     cancelText: 'Close',
-        //     title: 'Order Cart',
-        //     items: list
+        this.popup.add(ConfirmPopup, {
+            // confirmText: list[0].name,
+            // cancelText: list[0].itemname,
+            title: _t(bodyText),
+            // items: list,
+            // body : _t(bodyText),
+            
+
+
+        });
+
+        // const { confirmed, payload } =  this.popup.add(EditListPopup, {
+        //     title: _t("Lot/Serial Number(s) Required"),
+        //     name: "detail",
+        //     isSingleItem: False,
+        //     array: list,
+        // });
+        // const { confirmed, payload } = this.popup.add(MoneyDetailsPopup, {
+        //     moneyDetails: list,
+            
         // });
         // const { confirmed } =  this.popup.add(ConfirmPopup, {
         //     title: _t("Change Status"),
@@ -1291,14 +1337,15 @@ export class DeliveryOrdersScreen extends Component {
     
         goToOrders() {
             this.back(true);
+            const order = this.state.editModeProps.order;
             const partner = this.state.editModeProps.partner;
-            const partnerHasActiveOrders = this.pos
-                .get_order_list()
-                .some((order) => order.partner?.id === partner.id);
+            // const partnerHasActiveOrders = this.pos
+            //     .get_order_list()
+            //     .some((order) => order.partner?.id === partner.id);
             const ui = {
                 searchDetails: {
-                    fieldName: "PARTNER",
-                    searchTerm: partner.name,
+                    fieldName: "ORDER",
+                    searchTerm: order.unique_id,
                 },
                 filter: partnerHasActiveOrders ? "" : "SYNCED",
             };
@@ -1363,7 +1410,7 @@ export class DeliveryOrdersScreen extends Component {
             // the selected partner (if any) is displayed at the top of the list
             if (this.state.selectedOrder) {
                 const indexOfSelectedPartner = res.findIndex(
-                    (partner) => partner.id === this.state.selectedPartner.id
+                    (order) => order.unique_id === this.state.selectedPartner.unique_id
                 );
                 if (indexOfSelectedPartner !== -1) {
                     res.splice(indexOfSelectedPartner, 1);
@@ -1377,10 +1424,63 @@ export class DeliveryOrdersScreen extends Component {
             return false;
         }
         get partnerLink() {
-            return `/web#model=res.partner&id=${this.state.editModeProps.partner.id}`;
+            return `/web#model=res.partner&id=${this.state.editModeProps.order.unique_id}`;
         }
     
         // Methods
+        _onPressEnterKeyOrder() {
+            console.log("@@@@@@@@@@@@@@@@@@@@@@@@_onPressEnterKeyOrder")
+            if (!this.state.queryOrder) {
+                console.log("================================not this.state.queryOrder")
+                return;
+            }
+            const result = this.searchOrder();
+            if (result.length > 0) {
+                this.notification.add(
+                    _t('%s order(s) found for "%s".', result.length, this.state.queryOrder),
+                    3000
+                );
+            } else {
+                this.notification.add(_t('No more order found for "%s".', this.state.queryOrder), 3000);
+            }
+        }
+        
+        updateOrderList(event) {
+            this.state.queryOrder = event.target.value;
+        }
+        
+        // searchOrder() {
+        //     let self = this;
+        //     if (!this.state.queryOrder) {
+                
+        //         return self.state.zmallorders;
+        //     }
+        //     console.log("inside search order")
+        //     console.log("self.state.zmallorder"+self.state.zmallorders);
+        //     const result = self.state.zmallorders.filter(order => 
+        //         order.zmall_order_id.includes(this.state.queryOrder) || 
+        //         order.customer_name.includes(this.state.queryOrder) 
+        //     );
+        //     return result;
+        // }
+
+        searchOrder() {
+            if (!this.state.queryOrder) {
+                return this.state.zmallorders;
+            }
+            console.log("inside search order");
+            console.log("this.state.queryorder"+this.state.queryOrder)
+        
+            const lowerCaseQuery = this.state.queryOrder.toLowerCase();
+        
+            const result = this.state.zmallorders.filter(order => 
+                order.zmall_order_id.toLowerCase().includes(lowerCaseQuery) || 
+                order.customer_name.toLowerCase().includes(lowerCaseQuery)
+            );
+            console.log("results of order search: " + result);
+        
+            return result;
+        }
     
         async _onPressEnterKey() {
             if (!this.state.query) {
@@ -1407,16 +1507,16 @@ export class DeliveryOrdersScreen extends Component {
             clearInterval(this.polling);
             
         }
-        clickPartner(partner) {
-            if (this.state.selectedPartner && this.state.selectedPartner.id === partner.id) {
-                this.state.selectedPartner = null;
+        clickPartner(order) {
+            if (this.state.selectedOrder && this.state.selectedOrder.unique_id === order.unique_id) {
+                this.state.selectedOrder = null;
             } else {
-                this.state.selectedPartner = partner;
+                this.state.selectedOrder = order;
             }
             this.confirm();
         }
-        editPartner(partner) {
-            this.state.editModeProps.partner = partner;
+        editPartner(order) {
+            this.state.editModeProps.order = order;
             this.activateEditMode();
         }
         createPartner() {
@@ -1460,6 +1560,61 @@ export class DeliveryOrdersScreen extends Component {
                 "pos.session",
                 "get_pos_ui_res_partner_by_params",
                 [[odoo.pos_session_id], { domain, limit: limit, offset: this.state.currentOffset }]
+            );
+            return result;
+        }
+
+
+        // search feature
+        async _onPressEnterKeyOrder() {
+            if (!this.state.queryOrder) {
+                return;
+            }
+            const result = await this.searchOrder();
+            if (result.length > 0) {
+                this.notification.add(
+                    _t('%s order(s) found for "%s".', result.length, this.state.queryOrder),
+                    3000
+                );
+            } else {
+                this.notification.add(_t('No more order found for "%s".', this.state.queryOrder), 3000);
+            }
+        }
+        
+        async updateOrderList(event) {
+            this.state.queryOrder = event.target.value;
+            clearInterval(this.pollingOrder);
+        }
+        
+        async searchOrder() {
+            if (this.state.previousQueryOrder != this.state.queryOrder) {
+                this.state.currentOffsetOrder = 0;
+            }
+            const result = await this.getNewOrders();
+            this.pos.addOrders(result);
+            if (this.state.previousQueryOrder == this.state.queryOrder) {
+                this.state.currentOffsetOrder += result.length;
+            } else {
+                this.state.previousQueryOrder = this.state.queryOrder;
+                this.state.currentOffsetOrder = result.length;
+            }
+            return result;
+        }
+        
+        async getNewOrders() {
+            let domain = [];
+            const limit = 30;
+            if (this.state.queryOrder) {
+                domain = [
+                    '|',
+                    ['zmall_order_id', 'ilike', this.state.queryOrder + "%"],
+                    ['customer_name', 'ilike', this.state.queryOrder + "%"]
+                ];
+            }
+            const result = await this.orm.silent.call(
+                "pos.session",
+                "get_pos_ui_res_order_by_params",
+                [[odoo.pos_session_id], { domain, limit: limit, offset: this.state.currentOffsetOrder }]
             );
             return result;
         }
