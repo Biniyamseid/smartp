@@ -764,7 +764,8 @@ export class DeliveryOrdersScreen extends Component {
                     'note': note_for_item,
                     'full_product_name': full_product_name,
                     'total_item_price': total_item_price,
-                    'customer_name': customer_name
+                    'customer_name': customer_name,
+                    'label':itemname,
 
 
                 }

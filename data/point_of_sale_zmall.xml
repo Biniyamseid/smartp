@@ -1,25 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="pos_category_zmall" model="pos.category">
+    <!-- <record id="pos_category_zmall" model="pos.category">
         <field name="name">Zmall Order Product</field>
     </record>
-<!-- 
-    <record id="zmall_product" model="product.product">
-        <field name="available_in_pos">True</field>
-        <field name="list_price">1</field>
-        <field name="name">Zmall Order</field>
-        <field name="default_code">ZMALL_001</field>
-        <field name="type">product</field>
-        <field name="weight">0.01</field>
-        <field name="to_weight">False</field>
-        <field name="barcode"></field>
-        <field name="taxes_id" eval='[(5,)]'/>
-        <field name="categ_id" ref="product.product_category_1"/>
-        <field name="pos_categ_ids" ref="pos_category_zmall"/>
-        <field name="uom_id" ref="uom.product_uom_unit" />
-        <field name="uom_po_id" ref="uom.product_uom_unit" />
-        
-    </record> -->
+     <record id="pos_category_zmall2" model="pos.category">
+        <field name="name">DElivery company</field>
+    </record>
 
     <record id="zmall_product" model="product.product">
     <field name="available_in_pos">True</field>
@@ -35,7 +21,6 @@
     <field name="pos_categ_ids" eval="[(6, 0, [ref('pos_category_zmall')])]" /> <!-- Modify this line -->
     <field name="uom_id" ref="uom.product_uom_unit"/>
     <field name="uom_po_id" ref="uom.product_uom_unit"/>
-    <!-- <field name="image_1920" type="base64" file="pos_retail/static/src/img/zmallcircle.png"/> -->
-</record>
+</record> -->
 
 </odoo>

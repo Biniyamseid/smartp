@@ -18,6 +18,21 @@
                     </div>
                 </div>
             </xpath>
+
+        <!-- <xpath expr="//block[@id='pos_connected_devices_section']" position="inside">
+            <notebook>
+                   <page string="Zmall Delivery" groups="point_of_sale.group_pos_manager">
+                        <group>
+                            <group>
+                                <field name="enabled_zmall"/>
+                                <field name="zmall_api_endpoint" />
+                                <field name="zmall_username"/>
+                                <field name="zmall_password" />
+                            </group>
+                        </group>
+                    </page>
+                    </notebook>
+        </xpath> -->
             
             <xpath expr="//block[@id='pos_pricing_section']" position="inside">
                 <notebook>
